@@ -1,0 +1,315 @@
+import React, { useState } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { TrendingUp, TrendingDown, AlertCircle, CheckCircle } from 'lucide-react';
+
+// Mock data for Google Ads performance
+const mockGoogleAdsData = {
+  thisWeek: {
+    spend: 4250,
+    clicks: 892,
+    impressions: 45600,
+    conversions: 34,
+    ctr: 1.96,
+    cpc: 4.76,
+    cpa: 125.00,
+    roas: 2.8
+  },
+  lastWeek: {
+    spend: 3980,
+    clicks: 945,
+    impressions: 43200,
+    conversions: 38,
+    ctr: 2.19,
+    cpc: 4.21,
+    cpa: 104.74,
+    roas: 3.2
+  }
+};
+
+// Mock data for Meta Ads performance
+const mockMetaAdsData = {
+  thisWeek: {
+    spend: 3100,
+    clicks: 1240,
+    impressions: 78500,
+    conversions: 28,
+    ctr: 1.58,
+    cpc: 2.50,
+    cpa: 110.71,
+    roas: 2.4
+  },
+  lastWeek: {
+    spend: 2950,
+    clicks: 1180,
+    impressions: 74200,
+    conversions: 31,
+    ctr: 1.59,
+    cpc: 2.50,
+    cpa: 95.16,
+    roas: 2.9
+  }
+};
+
+// Mock competitor intelligence
+const mockCompetitorData = [
+  {
+    competitor: "Competitor A",
+    theme: "Free trial + onboarding support",
+    format: "Video testimonials",
+    frequency: "High (seen 8x this week)"
+  },
+  {
+    competitor: "Competitor B",
+    theme: "ROI calculator + case studies",
+    format: "Carousel ads with stats",
+    frequency: "Medium (seen 4x this week)"
+  },
+  {
+    competitor: "Competitor C",
+    theme: "Integration partnerships emphasis",
+    format: "Static image + CTA",
+    frequency: "Low (seen 2x this week)"
+  }
+];
+
+const ToviDashboard = () => {
+  const [analysis, setAnalysis] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const runAnalysis = async () => {
+    setLoading(true);
+    setError(null);
+
+    const systemPrompt = `You are the TOVI Growth Intelligence Assistant.
+Your job is to analyze weekly Google Ads and Meta Ads performance data alongside competitor advertising activity and provide clear, actionable growth recommendations.
+
+PRIMARY OBJECTIVES:
+1. Diagnose paid media performance (what's working, what's wasting spend, what changed week-over-week).
+2. Identify patterns in competitor messaging, formats, and offers.
+3. Compare TOVI's strategy to competitors and surface opportunities.
+4. Recommend concrete actions for the coming week.
+
+WHEN ANALYZING STATS:
+- Focus on CTR, CPC, CPA, ROAS, spend efficiency, and creative fatigue.
+- Call out inefficiencies and likely causes.
+- Avoid generic advice — every recommendation must be specific and actionable.
+
+WHEN ANALYZING COMPETITORS:
+- Look for repeated themes (a signal something is working).
+- Identify underused angles TOVI could test.
+- Do NOT assume access to competitor spend numbers.
+
+OUTPUT FORMAT (always use this):
+1. TL;DR (2–3 bullets)
+2. Performance Snapshot (Google + Meta)
+3. Competitor Watch
+4. What TOVI Should Do Next (prioritized actions)
+5. Tests & Questions for the Week
+
+TONE:
+Clear, confident, operator-level.
+No fluff. No marketing buzzwords.
+Write in plain English suitable for an executive email.`;
+
+    const dataPrompt = `Analyze this week's paid media performance:
+
+GOOGLE ADS - THIS WEEK:
+- Spend: $${mockGoogleAdsData.thisWeek.spend}
+- Clicks: ${mockGoogleAdsData.thisWeek.clicks}
+- Impressions: ${mockGoogleAdsData.thisWeek.impressions.toLocaleString()}
+- Conversions: ${mockGoogleAdsData.thisWeek.conversions}
+- CTR: ${mockGoogleAdsData.thisWeek.ctr}%
+- CPC: $${mockGoogleAdsData.thisWeek.cpc}
+- CPA: $${mockGoogleAdsData.thisWeek.cpa}
+- ROAS: ${mockGoogleAdsData.thisWeek.roas}x
+
+GOOGLE ADS - LAST WEEK:
+- Spend: $${mockGoogleAdsData.lastWeek.spend}
+- Clicks: ${mockGoogleAdsData.lastWeek.clicks}
+- Impressions: ${mockGoogleAdsData.lastWeek.impressions.toLocaleString()}
+- Conversions: ${mockGoogleAdsData.lastWeek.conversions}
+- CTR: ${mockGoogleAdsData.lastWeek.ctr}%
+- CPC: $${mockGoogleAdsData.lastWeek.cpc}
+- CPA: $${mockGoogleAdsData.lastWeek.cpa}
+- ROAS: ${mockGoogleAdsData.lastWeek.roas}x
+
+META ADS - THIS WEEK:
+- Spend: $${mockMetaAdsData.thisWeek.spend}
+- Clicks: ${mockMetaAdsData.thisWeek.clicks}
+- Impressions: ${mockMetaAdsData.thisWeek.impressions.toLocaleString()}
+- Conversions: ${mockMetaAdsData.thisWeek.conversions}
+- CTR: ${mockMetaAdsData.thisWeek.ctr}%
+- CPC: $${mockMetaAdsData.thisWeek.cpc}
+- CPA: $${mockMetaAdsData.thisWeek.cpa}
+- ROAS: ${mockMetaAdsData.thisWeek.roas}x
+
+META ADS - LAST WEEK:
+- Spend: $${mockMetaAdsData.lastWeek.spend}
+- Clicks: ${mockMetaAdsData.lastWeek.clicks}
+- Impressions: ${mockMetaAdsData.lastWeek.impressions.toLocaleString()}
+- Conversions: ${mockMetaAdsData.lastWeek.conversions}
+- CTR: ${mockMetaAdsData.lastWeek.ctr}%
+- CPC: $${mockMetaAdsData.lastWeek.cpc}
+- CPA: $${mockMetaAdsData.lastWeek.cpa}
+- ROAS: ${mockMetaAdsData.lastWeek.roas}x
+
+COMPETITOR INTELLIGENCE:
+${mockCompetitorData.map(c => `- ${c.competitor}: ${c.theme} | Format: ${c.format} | ${c.frequency}`).join('\n')}
+
+Provide your analysis following the exact output format specified in your instructions.`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2000,
+          system: systemPrompt,
+          messages: [
+            {
+              role: 'user',
+              content: dataPrompt
+            }
+          ]
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.content && data.content[0]?.text) {
+        setAnalysis(data.content[0].text);
+      } else {
+        setError('Unable to generate analysis. Please try again.');
+      }
+    } catch (err) {
+      setError('Error connecting to analysis engine: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const MetricCard = ({ title, thisWeek, lastWeek, format = 'number', inverse = false }) => {
+    const change = ((thisWeek - lastWeek) / lastWeek * 100).toFixed(1);
+    const isPositive = inverse ? change < 0 : change > 0;
+    
+    const formatValue = (val) => {
+      if (format === 'currency') return `$${val.toFixed(2)}`;
+      if (format === 'percent') return `${val}%`;
+      if (format === 'multiplier') return `${val}x`;
+      return val.toLocaleString();
+    };
+
+    return (
+      <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <div className="text-sm text-gray-600 mb-1">{title}</div>
+        <div className="text-2xl font-bold text-gray-900">{formatValue(thisWeek)}</div>
+        <div className={`text-sm flex items-center mt-1 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+          {isPositive ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
+          <span className="ml-1">{change}% vs last week</span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">TOVI Growth Intelligence</h1>
+          <p className="text-gray-600">Weekly paid media performance & competitor analysis</p>
+        </div>
+
+        {/* Action Button */}
+        <div className="mb-6">
+          <button
+            onClick={runAnalysis}
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? 'Analyzing...' : 'Run Weekly Analysis'}
+          </button>
+        </div>
+
+        {/* Google Ads Metrics */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Google Ads Performance</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <MetricCard title="Spend" thisWeek={mockGoogleAdsData.thisWeek.spend} lastWeek={mockGoogleAdsData.lastWeek.spend} format="currency" inverse={true} />
+            <MetricCard title="CTR" thisWeek={mockGoogleAdsData.thisWeek.ctr} lastWeek={mockGoogleAdsData.lastWeek.ctr} format="percent" />
+            <MetricCard title="CPA" thisWeek={mockGoogleAdsData.thisWeek.cpa} lastWeek={mockGoogleAdsData.lastWeek.cpa} format="currency" inverse={true} />
+            <MetricCard title="ROAS" thisWeek={mockGoogleAdsData.thisWeek.roas} lastWeek={mockGoogleAdsData.lastWeek.roas} format="multiplier" />
+          </div>
+        </div>
+
+        {/* Meta Ads Metrics */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Meta Ads Performance</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <MetricCard title="Spend" thisWeek={mockMetaAdsData.thisWeek.spend} lastWeek={mockMetaAdsData.lastWeek.spend} format="currency" inverse={true} />
+            <MetricCard title="CTR" thisWeek={mockMetaAdsData.thisWeek.ctr} lastWeek={mockMetaAdsData.lastWeek.ctr} format="percent" />
+            <MetricCard title="CPA" thisWeek={mockMetaAdsData.thisWeek.cpa} lastWeek={mockMetaAdsData.lastWeek.cpa} format="currency" inverse={true} />
+            <MetricCard title="ROAS" thisWeek={mockMetaAdsData.thisWeek.roas} lastWeek={mockMetaAdsData.lastWeek.roas} format="multiplier" />
+          </div>
+        </div>
+
+        {/* Competitor Intelligence */}
+        <div className="mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Competitor Watch</h2>
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Competitor</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Theme</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Format</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Frequency</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {mockCompetitorData.map((comp, idx) => (
+                  <tr key={idx}>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{comp.competitor}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{comp.theme}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{comp.format}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{comp.frequency}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* AI Analysis Output */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start">
+              <AlertCircle className="text-red-600 mr-2 flex-shrink-0" size={20} />
+              <div className="text-red-800">{error}</div>
+            </div>
+          </div>
+        )}
+
+        {analysis && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="flex items-center mb-4">
+              <CheckCircle className="text-green-600 mr-2" size={24} />
+              <h2 className="text-xl font-bold text-gray-900">Intelligence Report</h2>
+            </div>
+            <div className="prose max-w-none">
+              <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
+                {analysis}
+              </pre>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ToviDashboard;
