@@ -21,10 +21,15 @@ export default async function handler(req, res) {
     }
 
     const fullPrompt = systemPrompt + "\n\n" + dataPrompt;
-const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`;    const response = await fetch(url, {
+    
+    // Use v1 API with x-goog-api-key header instead
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-goog-api-key': process.env.GEMINI_API_KEY
       },
       body: JSON.stringify({
         contents: [{
@@ -35,28 +40,15 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:
       })
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return res.status(500).json({ 
-        content: [{ text: `Gemini API Error (${response.status}): ${errorText}` }]
-      });
-    }
-
     const data = await response.json();
     
-    if (data.error) {
+    if (!response.ok || data.error) {
       return res.status(500).json({ 
-        content: [{ text: `Gemini Error: ${JSON.stringify(data.error)}` }]
+        content: [{ text: `API Error: ${JSON.stringify(data)}` }]
       });
     }
     
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!text) {
-      return res.status(500).json({ 
-        content: [{ text: `No text in response. Full response: ${JSON.stringify(data)}` }]
-      });
-    }
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
     
     return res.status(200).json({
       content: [{ text: text }]
