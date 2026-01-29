@@ -169,21 +169,15 @@ ${mockCompetitorData.map(c => `- ${c.competitor}: ${c.theme} | Format: ${c.forma
 
 Provide your analysis following the exact output format specified in your instructions.`;
 
-            try {const response = await fetch('/api/analyze', {                
+            try {
+              const response = await fetch('/api/analyze', {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                  model: 'claude-sonnet-4-20250514',
-                  max_tokens: 2000,
-                  system: systemPrompt,
-                  messages: [
-                    {
-                      role: 'user',
-                      content: dataPrompt
-                    }
-                  ]
+                  systemPrompt: systemPrompt,
+                  dataPrompt: dataPrompt
                 })
               });
 
