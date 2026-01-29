@@ -21,8 +21,11 @@ export default async function handler(req, res) {
     }
 
     const fullPrompt = systemPrompt + "\n\n" + dataPrompt;
+    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`;
     
-const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {      headers: {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -30,13 +33,7 @@ const response = await fetch(`https://generativelanguage.googleapis.com/v1/model
           parts: [{
             text: fullPrompt
           }]
-        }],
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 2048,
-        }
+        }]
       })
     });
 
