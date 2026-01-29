@@ -22,8 +22,7 @@ export default async function handler(req, res) {
 
     const fullPrompt = systemPrompt + "\n\n" + dataPrompt;
     
-    // Use v1 API with x-goog-api-key header instead
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+    const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent';
     
     const response = await fetch(url, {
       method: 'POST',
