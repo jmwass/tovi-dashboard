@@ -15,6 +15,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        // Mock Google Ads data (we'll replace this later)
         const mockGoogleAdsData = {
           thisWeek: {
             spend: 4250,
@@ -67,6 +68,7 @@
           const [analyzingLoading, setAnalyzingLoading] = useState(false);
           const [error, setError] = useState(null);
 
+          // Fetch real Meta Ads data on load
           useEffect(() => {
             fetchMetaAdsData();
           }, []);
@@ -76,11 +78,8 @@
               const response = await fetch('/api/meta-ads');
               const data = await response.json();
               
-              if (data.error || !data.success) {
-                console.error('Meta Ads API Error:', data.error || data);
-                setMetaAdsData(null);
-              } else if (data.metaResponse && data.metaResponse.error) {
-                console.error('Meta API returned error:', data.metaResponse.error);
+              if (data.error) {
+                console.error('Meta Ads API Error:', data.error);
                 setMetaAdsData(null);
               } else {
                 setMetaAdsData(data);
@@ -128,12 +127,7 @@ Clear, confident, operator-level.
 No fluff. No marketing buzzwords.
 Write in plain English suitable for an executive email.`;
 
-            const defaultData = {
-              thisWeek: { spend: 0, clicks: 0, impressions: 0, conversions: 0, ctr: 0, cpc: 0, cpa: 0, roas: 0 },
-              lastWeek: { spend: 0, clicks: 0, impressions: 0, conversions: 0, ctr: 0, cpc: 0, cpa: 0, roas: 0 }
-            };
-
-            const metaData = (metaAdsData && metaAdsData.thisWeek && metaAdsData.lastWeek) ? metaAdsData : defaultData;
+            const metaData = metaAdsData || { thisWeek: {spend: 0, clicks: 0, impressions: 0, conversions: 0, ctr: 0, cpc: 0, cpa: 0, roas: 0}, lastWeek: {spend: 0, clicks: 0, impressions: 0, conversions: 0, ctr: 0, cpc: 0, cpa: 0, roas: 0} };
 
             const dataPrompt = `Analyze this week's paid media performance:
 
@@ -209,7 +203,7 @@ Provide your analysis following the exact output format specified in your instru
           };
 
           const MetricCard = ({ title, thisWeek, lastWeek, format = 'number', inverse = false }) => {
-            const change = lastWeek !== 0 ? ((thisWeek - lastWeek) / lastWeek * 100).toFixed(1) : 0;
+            const change = ((thisWeek - lastWeek) / lastWeek * 100).toFixed(1);
             const isPositive = inverse ? change < 0 : change > 0;
             
             const formatValue = (val) => {
