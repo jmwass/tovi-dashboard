@@ -235,10 +235,12 @@ Provide your analysis following the exact output format specified in your instru
             );
           };
 
-          const displayMetaData = metaAdsData || {
+          const defaultData = {
             thisWeek: { spend: 0, clicks: 0, impressions: 0, conversions: 0, ctr: 0, cpc: 0, cpa: 0, roas: 0 },
             lastWeek: { spend: 0, clicks: 0, impressions: 0, conversions: 0, ctr: 0, cpc: 0, cpa: 0, roas: 0 }
           };
+          
+          const displayMetaData = metaAdsData && metaAdsData.thisWeek && metaAdsData.lastWeek ? metaAdsData : defaultData;
 
           return (
             <div className="min-h-screen bg-gray-50 p-6">
