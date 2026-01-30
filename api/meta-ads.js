@@ -23,8 +23,3 @@ module.exports = async (req, res) => {
     });
   }
 };
-```
-
-**Commit this**, wait 30 seconds, then visit:
-```
-https://tovi-dashboard.vercel.app/api/meta-ads
