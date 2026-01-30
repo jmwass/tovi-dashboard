@@ -13,8 +13,9 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useEffect } = React;
 
+        // Mock Google Ads data (we'll replace this later)
         const mockGoogleAdsData = {
           thisWeek: {
             spend: 4250,
@@ -35,29 +36,6 @@
             cpc: 4.21,
             cpa: 104.74,
             roas: 3.2
-          }
-        };
-
-        const mockMetaAdsData = {
-          thisWeek: {
-            spend: 3100,
-            clicks: 1240,
-            impressions: 78500,
-            conversions: 28,
-            ctr: 1.58,
-            cpc: 2.50,
-            cpa: 110.71,
-            roas: 2.4
-          },
-          lastWeek: {
-            spend: 2950,
-            clicks: 1180,
-            impressions: 74200,
-            conversions: 31,
-            ctr: 1.59,
-            cpc: 2.50,
-            cpa: 95.16,
-            roas: 2.9
           }
         };
 
@@ -83,12 +61,39 @@
         ];
 
         const ToviDashboard = () => {
+          const [metaAdsData, setMetaAdsData] = useState(null);
+          const [googleAdsData, setGoogleAdsData] = useState(mockGoogleAdsData);
+          const [loading, setLoading] = useState(true);
           const [analysis, setAnalysis] = useState(null);
-          const [loading, setLoading] = useState(false);
+          const [analyzingLoading, setAnalyzingLoading] = useState(false);
           const [error, setError] = useState(null);
 
+          // Fetch real Meta Ads data on load
+          useEffect(() => {
+            fetchMetaAdsData();
+          }, []);
+
+          const fetchMetaAdsData = async () => {
+            try {
+              const response = await fetch('/api/meta-ads');
+              const data = await response.json();
+              
+              if (data.error) {
+                console.error('Meta Ads API Error:', data.error);
+                setMetaAdsData(null);
+              } else {
+                setMetaAdsData(data);
+              }
+            } catch (err) {
+              console.error('Error fetching Meta Ads data:', err);
+              setMetaAdsData(null);
+            } finally {
+              setLoading(false);
+            }
+          };
+
           const runAnalysis = async () => {
-            setLoading(true);
+            setAnalyzingLoading(true);
             setError(null);
 
             const systemPrompt = `You are the TOVI Growth Intelligence Assistant.
@@ -122,47 +127,49 @@ Clear, confident, operator-level.
 No fluff. No marketing buzzwords.
 Write in plain English suitable for an executive email.`;
 
+            const metaData = metaAdsData || { thisWeek: {spend: 0, clicks: 0, impressions: 0, conversions: 0, ctr: 0, cpc: 0, cpa: 0, roas: 0}, lastWeek: {spend: 0, clicks: 0, impressions: 0, conversions: 0, ctr: 0, cpc: 0, cpa: 0, roas: 0} };
+
             const dataPrompt = `Analyze this week's paid media performance:
 
 GOOGLE ADS - THIS WEEK:
-- Spend: $${mockGoogleAdsData.thisWeek.spend}
-- Clicks: ${mockGoogleAdsData.thisWeek.clicks}
-- Impressions: ${mockGoogleAdsData.thisWeek.impressions.toLocaleString()}
-- Conversions: ${mockGoogleAdsData.thisWeek.conversions}
-- CTR: ${mockGoogleAdsData.thisWeek.ctr}%
-- CPC: $${mockGoogleAdsData.thisWeek.cpc}
-- CPA: $${mockGoogleAdsData.thisWeek.cpa}
-- ROAS: ${mockGoogleAdsData.thisWeek.roas}x
+- Spend: $${googleAdsData.thisWeek.spend}
+- Clicks: ${googleAdsData.thisWeek.clicks}
+- Impressions: ${googleAdsData.thisWeek.impressions.toLocaleString()}
+- Conversions: ${googleAdsData.thisWeek.conversions}
+- CTR: ${googleAdsData.thisWeek.ctr}%
+- CPC: $${googleAdsData.thisWeek.cpc}
+- CPA: $${googleAdsData.thisWeek.cpa}
+- ROAS: ${googleAdsData.thisWeek.roas}x
 
 GOOGLE ADS - LAST WEEK:
-- Spend: $${mockGoogleAdsData.lastWeek.spend}
-- Clicks: ${mockGoogleAdsData.lastWeek.clicks}
-- Impressions: ${mockGoogleAdsData.lastWeek.impressions.toLocaleString()}
-- Conversions: ${mockGoogleAdsData.lastWeek.conversions}
-- CTR: ${mockGoogleAdsData.lastWeek.ctr}%
-- CPC: $${mockGoogleAdsData.lastWeek.cpc}
-- CPA: $${mockGoogleAdsData.lastWeek.cpa}
-- ROAS: ${mockGoogleAdsData.lastWeek.roas}x
+- Spend: $${googleAdsData.lastWeek.spend}
+- Clicks: ${googleAdsData.lastWeek.clicks}
+- Impressions: ${googleAdsData.lastWeek.impressions.toLocaleString()}
+- Conversions: ${googleAdsData.lastWeek.conversions}
+- CTR: ${googleAdsData.lastWeek.ctr}%
+- CPC: $${googleAdsData.lastWeek.cpc}
+- CPA: $${googleAdsData.lastWeek.cpa}
+- ROAS: ${googleAdsData.lastWeek.roas}x
 
 META ADS - THIS WEEK:
-- Spend: $${mockMetaAdsData.thisWeek.spend}
-- Clicks: ${mockMetaAdsData.thisWeek.clicks}
-- Impressions: ${mockMetaAdsData.thisWeek.impressions.toLocaleString()}
-- Conversions: ${mockMetaAdsData.thisWeek.conversions}
-- CTR: ${mockMetaAdsData.thisWeek.ctr}%
-- CPC: $${mockMetaAdsData.thisWeek.cpc}
-- CPA: $${mockMetaAdsData.thisWeek.cpa}
-- ROAS: ${mockMetaAdsData.thisWeek.roas}x
+- Spend: $${metaData.thisWeek.spend}
+- Clicks: ${metaData.thisWeek.clicks}
+- Impressions: ${metaData.thisWeek.impressions.toLocaleString()}
+- Conversions: ${metaData.thisWeek.conversions}
+- CTR: ${metaData.thisWeek.ctr}%
+- CPC: $${metaData.thisWeek.cpc}
+- CPA: $${metaData.thisWeek.cpa}
+- ROAS: ${metaData.thisWeek.roas}x
 
 META ADS - LAST WEEK:
-- Spend: $${mockMetaAdsData.lastWeek.spend}
-- Clicks: ${mockMetaAdsData.lastWeek.clicks}
-- Impressions: ${mockMetaAdsData.lastWeek.impressions.toLocaleString()}
-- Conversions: ${mockMetaAdsData.lastWeek.conversions}
-- CTR: ${mockMetaAdsData.lastWeek.ctr}%
-- CPC: $${mockMetaAdsData.lastWeek.cpc}
-- CPA: $${mockMetaAdsData.lastWeek.cpa}
-- ROAS: ${mockMetaAdsData.lastWeek.roas}x
+- Spend: $${metaData.lastWeek.spend}
+- Clicks: ${metaData.lastWeek.clicks}
+- Impressions: ${metaData.lastWeek.impressions.toLocaleString()}
+- Conversions: ${metaData.lastWeek.conversions}
+- CTR: ${metaData.lastWeek.ctr}%
+- CPC: $${metaData.lastWeek.cpc}
+- CPA: $${metaData.lastWeek.cpa}
+- ROAS: ${metaData.lastWeek.roas}x
 
 COMPETITOR INTELLIGENCE:
 ${mockCompetitorData.map(c => `- ${c.competitor}: ${c.theme} | Format: ${c.format} | ${c.frequency}`).join('\n')}
@@ -191,7 +198,7 @@ Provide your analysis following the exact output format specified in your instru
             } catch (err) {
               setError('Error connecting to analysis engine: ' + err.message);
             } finally {
-              setLoading(false);
+              setAnalyzingLoading(false);
             }
           };
 
@@ -228,41 +235,52 @@ Provide your analysis following the exact output format specified in your instru
             );
           };
 
+          const displayMetaData = metaAdsData || {
+            thisWeek: { spend: 0, clicks: 0, impressions: 0, conversions: 0, ctr: 0, cpc: 0, cpa: 0, roas: 0 },
+            lastWeek: { spend: 0, clicks: 0, impressions: 0, conversions: 0, ctr: 0, cpc: 0, cpa: 0, roas: 0 }
+          };
+
           return (
             <div className="min-h-screen bg-gray-50 p-6">
               <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">TOVI Growth Intelligence</h1>
                   <p className="text-gray-600">Weekly paid media performance & competitor analysis</p>
+                  {!metaAdsData && !loading && (
+                    <p className="text-sm text-orange-600 mt-2">⚠ Using mock Meta Ads data (API connection issue)</p>
+                  )}
                 </div>
 
                 <div className="mb-6">
                   <button
                     onClick={runAnalysis}
-                    disabled={loading}
+                    disabled={analyzingLoading}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                   >
-                    {loading ? 'Analyzing...' : 'Run Weekly Analysis'}
+                    {analyzingLoading ? 'Analyzing...' : 'Run Weekly Analysis'}
                   </button>
                 </div>
 
                 <div className="mb-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-4">Google Ads Performance</h2>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <MetricCard title="Spend" thisWeek={mockGoogleAdsData.thisWeek.spend} lastWeek={mockGoogleAdsData.lastWeek.spend} format="currency" inverse={true} />
-                    <MetricCard title="CTR" thisWeek={mockGoogleAdsData.thisWeek.ctr} lastWeek={mockGoogleAdsData.lastWeek.ctr} format="percent" />
-                    <MetricCard title="CPA" thisWeek={mockGoogleAdsData.thisWeek.cpa} lastWeek={mockGoogleAdsData.lastWeek.cpa} format="currency" inverse={true} />
-                    <MetricCard title="ROAS" thisWeek={mockGoogleAdsData.thisWeek.roas} lastWeek={mockGoogleAdsData.lastWeek.roas} format="multiplier" />
+                    <MetricCard title="Spend" thisWeek={googleAdsData.thisWeek.spend} lastWeek={googleAdsData.lastWeek.spend} format="currency" inverse={true} />
+                    <MetricCard title="CTR" thisWeek={googleAdsData.thisWeek.ctr} lastWeek={googleAdsData.lastWeek.ctr} format="percent" />
+                    <MetricCard title="CPA" thisWeek={googleAdsData.thisWeek.cpa} lastWeek={googleAdsData.lastWeek.cpa} format="currency" inverse={true} />
+                    <MetricCard title="ROAS" thisWeek={googleAdsData.thisWeek.roas} lastWeek={googleAdsData.lastWeek.roas} format="multiplier" />
                   </div>
                 </div>
 
                 <div className="mb-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-4">Meta Ads Performance</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">
+                    Meta Ads Performance 
+                    {metaAdsData && <span className="text-green-600 text-sm ml-2">✓ Live Data</span>}
+                  </h2>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <MetricCard title="Spend" thisWeek={mockMetaAdsData.thisWeek.spend} lastWeek={mockMetaAdsData.lastWeek.spend} format="currency" inverse={true} />
-                    <MetricCard title="CTR" thisWeek={mockMetaAdsData.thisWeek.ctr} lastWeek={mockMetaAdsData.lastWeek.ctr} format="percent" />
-                    <MetricCard title="CPA" thisWeek={mockMetaAdsData.thisWeek.cpa} lastWeek={mockMetaAdsData.lastWeek.cpa} format="currency" inverse={true} />
-                    <MetricCard title="ROAS" thisWeek={mockMetaAdsData.thisWeek.roas} lastWeek={mockMetaAdsData.lastWeek.roas} format="multiplier" />
+                    <MetricCard title="Spend" thisWeek={displayMetaData.thisWeek.spend} lastWeek={displayMetaData.lastWeek.spend} format="currency" inverse={true} />
+                    <MetricCard title="CTR" thisWeek={displayMetaData.thisWeek.ctr} lastWeek={displayMetaData.lastWeek.ctr} format="percent" />
+                    <MetricCard title="CPA" thisWeek={displayMetaData.thisWeek.cpa} lastWeek={displayMetaData.lastWeek.cpa} format="currency" inverse={true} />
+                    <MetricCard title="ROAS" thisWeek={displayMetaData.thisWeek.roas} lastWeek={displayMetaData.lastWeek.roas} format="multiplier" />
                   </div>
                 </div>
 
@@ -302,15 +320,57 @@ Provide your analysis following the exact output format specified in your instru
                 )}
 
                 {analysis && (
-                  <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-                    <div className="flex items-center mb-4">
-                      <span className="text-green-600 mr-2 text-xl">✓</span>
-                      <h2 className="text-xl font-bold text-gray-900">Intelligence Report</h2>
+                  <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 rounded-t-lg">
+                      <div className="flex items-center">
+                        <span className="text-white mr-2 text-xl">✓</span>
+                        <h2 className="text-xl font-bold text-white">Intelligence Report</h2>
+                      </div>
                     </div>
-                    <div className="prose max-w-none">
-                      <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
-                        {analysis}
-                      </pre>
+                    <div className="p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {(() => {
+                          const sections = analysis.split(/###\s*\d+\.\s+|^\d+\.\s+/m).filter(s => s.trim());
+                          
+                          return sections.map((section, idx) => {
+                            const lines = section.trim().split('\n');
+                            let title = lines[0].trim();
+                            
+                            title = title
+                              .replace(/^\*+|\*+$/g, '')
+                              .replace(/^#+\s*/, '')
+                              .replace(/\*\*/g, '')
+                              .trim();
+                            
+                            const content = lines.slice(1)
+                              .map(line => line.trim())
+                              .filter(line => line && !line.match(/^-{3,}$/))
+                              .map(line => {
+                                return line
+                                  .replace(/^\*+\s*/g, '')
+                                  .replace(/\*\*/g, '')
+                                  .replace(/^-\s*/g, '')
+                                  .replace(/^•\s*/g, '')
+                                  .trim();
+                              })
+                              .filter(line => line)
+                              .join(' ');
+                            
+                            if (!title || !content) return null;
+                            
+                            return (
+                              <div key={idx} className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200 hover:shadow-lg transition-shadow">
+                                <h3 className="text-base font-bold text-blue-700 mb-3 pb-2 border-b-2 border-blue-300">
+                                  {title}
+                                </h3>
+                                <div className="text-sm text-gray-700 leading-relaxed">
+                                  <p className="whitespace-pre-line">{content}</p>
+                                </div>
+                              </div>
+                            );
+                          }).filter(Boolean);
+                        })()}
+                      </div>
                     </div>
                   </div>
                 )}
